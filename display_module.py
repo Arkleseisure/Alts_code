@@ -16,6 +16,7 @@ OXFORD_BLUE = [0, 33, 71]
 
 background_colour = BLACK
 text_colour = WHITE
+highlight_colour = [150, 150, 205]
 
 game_time = 180
 
@@ -63,6 +64,9 @@ class RectangleSprite(pygame.sprite.Sprite):
             self.rect.x = x - width//2
             self.rect.y = y - height//2
 
+        self.width = width
+        self.height = height
+
         # draws the background colour onto the image
         pygame.draw.rect(self.image, colour, [0, 0, width, height])
         self.colour = colour
@@ -87,6 +91,11 @@ class RectangleSprite(pygame.sprite.Sprite):
             self.image.blit(button_image, (0, 0))
             self.image.set_colorkey(WHITE)
 
+    def change_image(self, new_image):
+        button_image = pygame.image.load(absolute_path + '/' + new_image + '.png')
+        button_image = pygame.transform.scale(button_image, [self.width, self.height])
+        self.image.blit(button_image, (0, 0))
+
 
 '''
 Class for any buttons
@@ -99,17 +108,54 @@ image: image in the button
 class Button(RectangleSprite):
     def __init__(self, x, y, width=screen_width//10, height=screen_height//10, colour=[100, 100, 100], text='', font='Calibri', font_size=40, font_colour=[0,0,0], bold=False, italic=False, image='', left_align=False, name=''):
         super().__init__(width=width, height=height, x=x, y=y, colour=colour, text=text, font=font, font_size=font_size, font_colour=font_colour, bold=bold, italic=italic, image=image, left_align=left_align)
-        self.width = width
-        self.height = height
+
         if name:
             self.name = name
-        else:
+        elif text:
             self.name = text
+        elif image:
+            self.name = image
+
+        self.original_image = self.image.copy()
+        self.highlights_on = False
+
+        self.create_highlights()
+
 
     # returns True if the given x, y coordinates are within the button, False if not
     def is_clicked(self, x, y):
         return self.rect.x < x < self.rect.x + self.width and self.rect.y < y < self.rect.y + self.height
      
+    # The highlight sprites appear to show that the button has been clicked. This function creates 4 of them, one at each side of the button.
+    def create_highlights(self):
+        highlight_frac = 0.1
+        highlight_width = self.width
+        highlight_height = min(self.height, self.width) * highlight_frac
+        highlight_x = 0
+        highlight_y = 0
+        self.highlight_group = pygame.sprite.Group()
+        self.top_highlight = RectangleSprite(highlight_width, highlight_height, highlight_x, highlight_y, colour=highlight_colour, left_align=True)
+        highlight_y = self.height - highlight_height
+        self.bottom_highlight = RectangleSprite(highlight_width, highlight_height, highlight_x, highlight_y, colour=highlight_colour, left_align=True)
+        highlight_y = 0
+        highlight_width = min(self.height, self.width) * highlight_frac
+        highlight_height = self.height
+        self.left_highlight = RectangleSprite(highlight_width, highlight_height, highlight_x, highlight_y, colour=highlight_colour, left_align=True)
+        highlight_x = self.width - highlight_width
+        self.right_highlight = RectangleSprite(highlight_width, highlight_height, highlight_x, highlight_y, colour=highlight_colour, left_align=True)
+        self.highlight_group.add(self.top_highlight, self.bottom_highlight, self.left_highlight, self.right_highlight)
+
+    # function to highlight a button when it's being clicked
+    def show_highlights(self):
+        self.highlights_on = True
+        self.highlight_group.draw(self.image)
+        pygame.display.update()
+
+    # function which returns the image to its original state after the highlights have been shown
+    def unshow_highlights(self):
+        self.highlights_on = False
+        self.image = self.original_image.copy()
+        pygame.display.update()
 
 '''
 Class to hold the blueprint for drawing the clock
@@ -206,9 +252,14 @@ def create_sprites(num_teams, num_sides):
     highlight_width = screen_height * 0.02
     highlight_x = (screen_width - highlight_length)//2
     highlight_y = (screen_height - highlight_height)//2
-    highlight_colour = [150, 150, 205]
     top_highlight = RectangleSprite(highlight_length, highlight_width, highlight_x, highlight_y,  colour=highlight_colour, left_align=True)
     bottom_highlight = RectangleSprite(highlight_length, highlight_width, highlight_x, highlight_y + highlight_height - highlight_width, colour=highlight_colour, left_align=True)
+
+    arrow_width = highlight_x*0.6
+    arrow_height = highlight_height * 0.6
+    arrow_x = highlight_x//2
+    arrow_y = highlight_y + highlight_height//2
+    current_match_arrow = RectangleSprite(arrow_width, arrow_height, arrow_x, arrow_y, image='arrow', left_align=False)
 
     # creates the items that appear on the bottom line of the screen
     bottom_line_y = screen_height * 0.8
@@ -219,7 +270,7 @@ def create_sprites(num_teams, num_sides):
     x = screen_width//2 - clock_width//2
     clock = Clock(clock_width, bottom_line_height, x, bottom_line_y, colour=highlight_colour, time_remaining=game_time, font_size=bottom_line_font_size, left_align=True)
     x -= 3 * bottom_line_spacing + 3 * bottom_line_height
-    pause = Button(x, bottom_line_y, bottom_line_height, bottom_line_height,  image='pause', left_align=True, name='pause')
+    undo = Button(x, bottom_line_y, bottom_line_height, bottom_line_height,  image='Mid_chonk_arrow', left_align=True, name='undo')
     x += bottom_line_height + bottom_line_spacing
     play = Button(x, bottom_line_y, bottom_line_height, bottom_line_height, image='play', left_align=True, name='play')
     x += bottom_line_height + bottom_line_spacing
@@ -232,22 +283,42 @@ def create_sprites(num_teams, num_sides):
 
     # creates a group to draw the background features to the screen.
     background_group = pygame.sprite.Group()
-    background_group.add(top_highlight, bottom_highlight, clock, teams, matches)
+    background_group.add(top_highlight, bottom_highlight, clock, teams, matches, current_match_arrow)
     button_group = pygame.sprite.Group()
-    button_group.add(pause, play, skip, change, restart, change_matches)
+    button_group.add(undo, play, skip, change, restart, change_matches)
 
     return background_group, button_group
 
 # waits until a button is clicked and then returns the name of the button clicked.
 def get_button_click(button_group, down_click=False):
     for event in pygame.event.get():
+        mouse_x, mouse_y = pygame.mouse.get_pos()
         if (event.type == pygame.MOUSEBUTTONUP and not down_click) or (event.type == pygame.MOUSEBUTTONDOWN and down_click):
-            mouse_x, mouse_y = pygame.mouse.get_pos()
             for button in button_group:
                 if button.is_clicked(mouse_x, mouse_y):
+                    button.unshow_highlights()
                     return button.name
+
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            for button in button_group:
+                if button.is_clicked(mouse_x, mouse_y):
+                    button.show_highlights()
+
         elif event.type == pygame.QUIT:
             return 'quit'
+
+        # accounts for the fact that the user may move their mouse off the button while holding their mouse pressed down.
+        # in this case we need to remove the highlight from the first button to be clicked and add it to any the mouse proce
+        mouse_press = pygame.mouse.get_pressed()
+        button_down = False
+        for i in range(3):
+            if mouse_press[i]:
+                button_down = True
+        for button in button_group:
+            if button.highlights_on and not button.is_clicked(mouse_x, mouse_y):
+                button.unshow_highlights()
+            elif button_down and button.is_clicked(mouse_x, mouse_y):
+                button.show_highlights()
 
 
 # draws a display which shows a question with various possible answers, then returns the answer chosen
@@ -312,14 +383,13 @@ def draw_question_box(question, answers):
     all_sprites.add(exit)
     buttons.add(exit)
 
-    # draws everything to the screen
-    all_sprites.draw(screen)
-    pygame.display.update()
-
     # gets the answer clicked on
     answer = False
     while not answer:
-       answer = get_button_click(buttons)
+        # draws everything to the screen
+        all_sprites.draw(screen)
+        pygame.display.update()
+        answer = get_button_click(buttons)
     return answer
 
 '''
@@ -419,7 +489,6 @@ def draw_arrow_box(params, param_min_max):
             param = button_clicked[:-1]
             if param_min_max[param][0] < params[param]:
                 params[param] -= 1
-
     return exited, quit
   
 
@@ -671,7 +740,25 @@ def get_match_change(sides, team_list, num_sim_matches):
                         button1.rect.y = original_y
                     break
 
-        answer = get_button_click(buttons, down_click=True)
+        answer = get_button_click(buttons, down_click=True)#, exceptions=['exit', 'quit', 'SAVE'])
+        
+        # when the user saves their answers, checks for games which may have already been played and warns the user about them
+        if answer == 'SAVE':
+            # waits until user has stopped clicking on the save button from the previous prompt
+            button_down = True
+            while button_down:
+                for event in pygame.event.get():
+                    if event.type == pygame.MOUSEBUTTONUP:
+                        button_down = False
+
+            for i in range(len(team_slots)//2):
+                if not team_slots[2 * i].team_number in team_slots[2 * i + 1].not_played:
+                    question_box_answers = ['Yes', 'No']
+                    play_again = draw_question_box(['Team ' + str(team_slots[2 * i].team_number) + ' has already played', 'Team ' + str(team_slots[2 * i + 1].team_number), 
+                                                    'Do you want them to play again?'], question_box_answers)
+                    if play_again == question_box_answers[1]:
+                        answer = ''
+                        break
 
     if answer == 'quit':
         quit = True
@@ -715,7 +802,7 @@ def draw_screen(prev_matches, matches, next_matches, background_group, button_gr
 
 
 def menu():
-    num_teams = 10
+    num_teams = 15
     num_sides = 3
     text_size = 60
 
