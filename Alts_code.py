@@ -2,10 +2,10 @@ import display_module
 import time
 from random import random
 import threading
+import numpy
 
-num_teams = 10
 num_sim_matches = 3
-num_total_matches = 20
+num_total_matches = 16
 
 '''
 Main class for the teams.
@@ -122,6 +122,13 @@ class Match():
         self.min_matches_at_loc = [min_played_in_loc[self.preference_order[i]] for i in range(len(self.preference_order))]
         self.max_matches_at_loc = [max_played_in_loc[self.preference_order[i]] for i in range(len(self.preference_order))]
 
+    # when a location for a match is no longer available, it must be removed from its preferences
+    def location_unavailable(self, location):
+        location_index = self.preference_order.index(location)
+        self.preference_order.pop(location_index)
+        self.min_matches_at_loc.pop(location_index)
+        self.max_matches_at_loc.pop(location_index)
+
 '''
 Initializes the team list with the teams in.
 '''
@@ -142,9 +149,9 @@ Makes a match with the following priorities:
 4. Number of the team for first game (so that the first match is always teams 1v2, 3v4, 5v6)
 and random thereafter
 '''
-def make_match(team_list, first_match=False):
+def make_match(team_list, first_matches=False):
     matches = []
-    sorted_teams = sorted(team_list, key = lambda team: (-team.consecutive_off, team.consecutive_games, team.matches_played, team.team_number if first_match else random()))
+    sorted_teams = sorted(team_list, key = lambda team: (-team.consecutive_off, team.consecutive_games, team.matches_played, team.team_number if first_matches else random()))
     teams_picked = []
 
     # Finds the best opponent for the team input
@@ -214,12 +221,9 @@ def even_sides(matches):
         # removes the match with the side allocated from the matches list
         matches.pop(min_index)
 
-        # removes that side from the list of available sides
+        # updates the match internal preference lists to inform it that the location at min_loc is no longer available
         for match in matches:
-            location_index = match.preference_order.index(min_loc)
-            match.preference_order.pop(location_index)
-            match.min_matches_at_loc.pop(location_index)
-            match.max_matches_at_loc.pop(location_index)
+            match.location_unavailable(min_loc)
     return sides_given
 
 
@@ -390,7 +394,7 @@ def change_team_num(team_list, sides, next_sides, removed_teams, time_remaining)
     if time_remaining[0] == display_module.game_time:
         current_games = AnswerNode(update_current_games)
     else:
-        current_games = QuestionNode(['The clock is running on these games', 'are you sure you', 'want to change them?'], ['Yes', 'No, change next games'])
+        current_games = QuestionNode(['The clock is running on', 'these games are you sure you', 'want to change them?'], ['Yes', 'No, change next games'])
         current_games.children.append(AnswerNode(update_current_games))
         current_games.children.append(AnswerNode(update_next_games))
     next_games = AnswerNode(update_next_games)
@@ -422,6 +426,10 @@ def change_team_num(team_list, sides, next_sides, removed_teams, time_remaining)
         exit = True
     elif final_func.type == 'q':
         final_func = final_func.get_answer_node()
+        if final_func == 'quit':
+            quit = True
+        elif final_func == 'exit':
+            exit = True
     if not quit and not exit:
         # runs the function which the user wants before getting a new set of matches
         exit, quit = next_node.answer_function(team_list, removed_teams)
@@ -480,6 +488,14 @@ def print_stats(teams, removed_teams):
     sorted_list = sorted(new_list, key=lambda team: team.team_number)
     for team in sorted_list:
         print(team)
+        pass
+
+    all_values = []
+    for i in range(len(sorted_list)):
+        for j in range(num_sim_matches):
+            all_values.append(sorted_list[i].sides[j])
+
+    print('Standard deviation of games played per side:', numpy.std(all_values))
 
 '''
 Updates the display of the clock
@@ -532,12 +548,13 @@ def main():
     team_list = init_teams()
     prev_sides = ['', '', '']
     removed_teams = []
-    matches = make_match(team_list, first_match=True)
+    matches = make_match(team_list, first_matches=True)
     sides = even_sides(matches)
     update_teams(team_list, sides, add=True)
-    next_matches = make_match(team_list)
+    next_matches = make_match(team_list, first_matches=True)
     next_sides = even_sides(next_matches)
     quit = False
+    first_matches = True
     timer_running = [False]
     time_remaining = [display_module.game_time]
     background_group, button_group = display_module.create_sprites(num_teams, num_sim_matches)
@@ -562,12 +579,20 @@ def main():
             # checks if a button has been clicked
             button_clicked = display_module.get_button_click(button_group)
             if button_clicked:
-                # play button sets the timer running
+                # the display of the buttons can change when they are clicked, so we need to draw the screen again before anything else is executed
+                display_module.draw_screen(prev_sides, sides, next_sides, background_group, button_group)
+                # play button sets the timer running or pauses it, depending on whether it's currently running
                 if button_clicked == 'play':
-                    timer_running[0] = True
-                # pause button stops the timer from running
-                elif button_clicked == 'pause':
-                    timer_running[0] = False
+                    if timer_running[0]:
+                        timer_running[0] = False
+                        for button in button_group:
+                            if button.name == 'play':
+                                button.change_image('play')
+                    else:
+                        timer_running[0] = True
+                        for button in button_group:
+                            if button.name == 'play':
+                                button.change_image('pause')
                 # skip button stops the timer from running and sets it to 0
                 elif button_clicked == 'skip':
                     timer_running[0] = False
@@ -609,15 +634,29 @@ def main():
         prev_sides = sides
         sides = next_sides
         update_teams(team_list, sides, add=True)
-        matches = make_match(team_list)
+
+        # makes the teams play the first matches in order
+        if first_matches:
+            first_matches = False
+            for team in team_list:
+                if team.matches_played == 0:
+                    first_matches = True
+                    break
+
+        matches = make_match(team_list, first_matches)
         next_sides = even_sides(matches)
 
-    '''
+        # resets the play/pause button to the play image
+        for button in button_group:
+            if button.name == 'play':
+                button.change_image('play')
+    '''  
     for i in range(num_total_matches):
         matches = make_match(team_list)
         sides_given = even_sides(matches)
-        print_matches(sides_given)
-    print_stats(team_list)
+        #print_matches(sides_given)
+        update_teams(team_list, sides_given, add=True)
+    print_stats(team_list, [])
     '''
 
 # calls the main function
@@ -627,3 +666,4 @@ if __name__ == '__main__':
         num_teams, num_sim_matches, quit_code = display_module.menu()
         if not quit_code:
             quit_code = main()
+ 
