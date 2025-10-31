@@ -9,6 +9,7 @@ num_total_matches = 16
 
 '''
 Main class for the teams.
+These contain all the stats about each individual team.
 '''
 class Team():
     def __init__(self, number):
@@ -146,7 +147,7 @@ Makes a match with the following priorities:
 1. Number of consecutive games a team has been off
 2. Number of consecutive games a team has played
 3. Total number of games a team has played
-4. Number of the team for first game (so that the first match is always teams 1v2, 3v4, 5v6)
+4. Number of the team for first set of matches (so that the first matches are always teams 1v2, 3v4, 5v6, then 7v8, 9v10, 11v12, ...)
 and random thereafter
 '''
 def make_match(team_list, first_matches=False):
@@ -198,7 +199,7 @@ def make_match(team_list, first_matches=False):
 
 
 '''
-Logic to even out how often each team plays on a side
+Logic to even out how often each team plays on each part of the rink
 '''
 def even_sides(matches):
     sides_given = [0 for i in range(len(matches))]
@@ -228,7 +229,8 @@ def even_sides(matches):
 
 
 '''
-Changes the number of teams playing and/or the number of sides they are playing on
+Changes the number of teams playing and/or the number of sections in the rink
+Also contains classes and functions for displaying the questions
 '''
 def change_team_num(team_list, sides, next_sides, removed_teams, time_remaining):
     # class to hold a multiple choice question, its possible answers and what should happen after each of the answers
@@ -667,3 +669,4 @@ if __name__ == '__main__':
         if not quit_code:
             quit_code = main()
  
+
