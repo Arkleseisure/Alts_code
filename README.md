@@ -11,7 +11,7 @@ The aim of this program is to match teams so that:
 2. They all spend the same amount of time on each part of the rink (the centre of the ice is known for being much more chopped up and worse to skate on)
 3. The first set of games is always teams 1vs2, 3vs4, 5vs6, and so on, because this makes everyone's life easier.
 
-Additional features I've added to make it easier for the committee (the program this is replacing didn't have these features, or feature 2 above come to think of it):
+Additional features I've added to make it easier for the committee (the program this is replacing didn't have these features - or feature 2 above come to think of it):
 1. Add/remove teams mid-session (for early departures and late arrivals)
 2. Change the number of pads being played on (noted "number of sides", allows future committees to try experimental numbers of pads)
 3. Edit current and future games (allowing for requests from players which want to play particular teams)
