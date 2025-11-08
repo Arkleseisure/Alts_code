@@ -18,6 +18,8 @@ Additional features I've added to make it easier for the committee (the program 
 4. Timer to time the games being played, with play and pause buttons in case of necessity.
 5. Skip button to skip a match or go to the next match.
 
+For anyone just interested in how the matching process works, have a look at the documentation for the "make_match" function, under the Global Functions header below. If interested in how it's ensured that different teams end up playing on each part of the rink approximately the same amount, look at the "even_sides" function, under the same header.
+
 # Docs
 For Altsers who want to improve the code, it may be a good idea to familiarise yourself with the working of the code here.
 The logic for the system is in "Alts_code.py", while the stuff for the pygame display is in "display_module.py". If you just want to download and run the code, you can do this on Windows by downloading and running "Alts_code.exe". 
@@ -81,5 +83,48 @@ Note min, max_matches_at_loc are somewhat messy as variables, but they make the 
 - update(team1, team2): Reinitialises the match with 2 different teams
 - location_unavailable(location): updates the preference order, min, max_matches_at_loc with the information that the match can no longer be played at location.
 
+## Global Variables
+### num_teams
+This is the total number of teams currently playing. The variable is set at the menu at the start and updated when teams are added or removed.
+### num_sim_matches
+This is the number of games occurring at any one time. Elsewhere in this document I have referred to this as the "number of pads" or the "number of sides". In a standard alts session it will be 3, or 2 if playing half ice. The code is built to work with any number of pads however (although the display starts to break at around 10 or 11). I imagine there could be a fun session in the future with e.g teams of 3 and the ice split into 6 (although we would need extra cones and ways to make goals).
+### quit_code
+This is a simple variable which holds whether the user decided to exit the program via the cross at the top right.
+
 ## Global Functions
-[UNFINISHED, will continue soon]
+### init_teams() -> list(Team)
+Creates a list of teams with numbers from 1 to num_teams
+
+### make_match(team_list, first_matches=False) -> list(Match)
+Creates a list of num_sim_matches matches. 
+
+For the matching process, the teams are first ordered by priority. The priority is determined by:
+1. Most consecutive games off the ice
+2. Lowest number of consecutive games played
+3. Lowest number of total games
+4. team_number if first_matches=True, otherwise random
+
+At the time of writing, first_matches is set to True if there is any team which has not yet played any games (although it stays False if a team is added after all other teams have played a game).
+
+Once the priority list is made, the first team in the list is paired with the next team in the priority list that it has not yet played. Both are set aside and the process is repeated until all games are complete.
+
+If this fails, as is possible under certain circumstances, the randomisation in step 4 of the priority order is repeated and the process as a whole is redone.
+
+If this repeatedly fails, or there aren't enough possible matches left to fill the remaining slots, it is assumed that all teams have played each other. Each team's not_played list is refilled with all possible opponents. Teams are prevented from playing each other twice in a row with a "last_team_played" variable, which is removed if attempts continue to fail (This could happen in e.g a simple scenario where there are 2 teams which are repeatedly playing each other on full ice).
+
+### [TO CONTINUE]
+### even_sides
+### change_team_num
+### change_sides
+### remove_team
+### add_removed_team
+### add_team_to_end
+### update_current_games
+### update_next_games
+### change_match
+### print_matches
+### print_stats
+### update_clock
+### update_teams
+### main
+## Display module
