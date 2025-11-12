@@ -4,7 +4,7 @@
 For those of you just looking through my GitHub unfamiliar with Alts, some background:
 Alts is a biweekly event at the Oxford ice rink where people turn up, pay for entry, and play casual hockey. 
 Players are split into teams of 6, which play each other in small, friendly 3 minute games across the rink. Each team is given a number at the start of the session, and there are usually between 15-25 teams.
-The rink is usually split into 3 matches, one in each of the end zones and one between the blue lines, but on occasion when there are fewer people the ice is split into 2 matches instead.
+The rink is usually split into 3 pads, one in each of the end zones and one between the blue lines, each containing one match between 2 teams. On occasion when there are fewer people the ice is split into 2 pads instead.
 
 The aim of this program is to match teams so that:
 1. They all get the same amount of ice time
@@ -13,7 +13,7 @@ The aim of this program is to match teams so that:
 
 Additional features I've added to make it easier for the committee (the program this is replacing didn't have these features - or feature 2 above come to think of it):
 1. Add/remove teams mid-session (for early departures and late arrivals)
-2. Change the number of pads being played on (noted "number of sides", allows future committees to try experimental numbers of pads)
+2. Change the number of pads being played on (in the system this is called "number of sides", allows future committees to try different setups with e.g 6 simultaneous matches between smaller teams)
 3. Edit current and future games (allowing for requests from players which want to play particular teams)
 4. Timer to time the games being played, with play and pause buttons in case of necessity.
 5. Skip button to skip a match or go to the next match.
@@ -139,7 +139,8 @@ AnswerNode(answer_function) is called once the maze of QuestionNodes has been na
 - update_next_games: Updates the next set of games once the information has been changed.
   
 ### change_match
-
+Allows the user to change who is playing the next set of matches. 
+Most of the functionality is 
 ### print_matches
 ### print_stats
 ### update_clock
