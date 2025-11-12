@@ -42,60 +42,60 @@ Information includes things like "self.teams = [team1, team2]", where team1 and 
 Team(number): Creates an instance of the team class with team_number = number
 #### Variables
 Main variables:
-- not_played: List of the team numbers which have not yet been played
-- matches_played: Number of matches played
-- sides: Number of times each pad (noted side throughout, I unfortunately cannot be bothered to change it to better terminology) has been played on by the team
-- team_number: Number of the team (i.e, the number that gets called out over the mic when this team plays)
-- consecutive_games: Number of consecutive games this team has been on the ice. (Used for prioritising teams to play next)
-- consecutive_off: Number of consecutive games this team has been off the ice. (Used for prioritising teams to play next)
-- max_consec: Maximum number of consecutive games this team has played. (Currently only used for debugging purposes)
-- max_off: Maximum number of consecutive games this team has been off the ice. (Currently only used for debugging purposes)
-- last_team_played: Last team played by this team (Used for avoiding playing the same team twice in a row once all teams have played each other)
+- not_played - list(int): List of the team numbers which have not yet been played
+- matches_played - int: Number of matches played
+- sides - list(int): Number of times each pad (noted side throughout, I unfortunately cannot be bothered to change it to better terminology) has been played on by the team
+- team_number - int: Number of the team (i.e, the number that gets called out over the mic when this team plays)
+- consecutive_games - int: Number of consecutive games this team has been on the ice. (Used for prioritising teams to play next)
+- consecutive_off - int: Number of consecutive games this team has been off the ice. (Used for prioritising teams to play next)
+- max_consec - int: Maximum number of consecutive games this team has played. (Currently only used for debugging purposes)
+- max_off - int: Maximum number of consecutive games this team has been off the ice. (Currently only used for debugging purposes)
+- last_team_played - int: Last team played by this team (Used for avoiding playing the same team twice in a row once all teams have played each other)
 
 Previous variables (used for undoing actions):
-- prev_consec: Value of consecutive_games at the previous iteration (i.e after the previous set of games, what was the value of consecutive_games?)
-- prev_off: Value of consecutive_off at the previous iteration
-- prev_max_consec: Value of max_consec at the previous iteration
-- prev_max_off: Value of max_off at the previous iteration
-- prev_last_team_played: value of last_team_played at the previous iteration
+- prev_consec - int: Value of consecutive_games at the previous iteration (i.e after the previous set of games, what was the value of consecutive_games?)
+- prev_off - int: Value of consecutive_off at the previous iteration
+- prev_max_consec - int: Value of max_consec at the previous iteration
+- prev_max_off - int: Value of max_off at the previous iteration
+- prev_last_team_played - int: value of last_team_played at the previous iteration
 
 #### Functions
-- add_game(opponent, loc): Updates the team with a match against opponent (team number of said opponent) at loc (0, 1 or 2 if there are 3 sides being played on)
-- add_off: Updates the team with a period off the ice
-- undo_add_game(opponent, loc): Undoes add_game
-- undo_add_off: Undoes add_off
-- str: Turns the information about a team into the string. Used for interest and/or debugging purposes
+- add_game(opponent, loc) -> None: Updates the team with a match against opponent (team number of said opponent) at loc (0, 1 or 2 if there are 3 sides being played on)
+- add_off() -> None: Updates the team with a period off the ice
+- undo_add_game(opponent, loc) -> None: Undoes add_game
+- undo_add_off() -> None: Undoes add_off
+- str() -> str: Turns the information about a team into the string. Used for interest and/or debugging purposes
 
 
 ### Match Class
 Match(team1, team2): Creates an instance of the match class, representing a match between team1 and team2
 #### Variables
-- teams: List of teams participating in the match. Each team is an instance of the Team class.
-- preference_order: Ordered preferences of locations to play (e.g [2, 0, 1], if these teams playing on pad 2 is preferable, and playing on pad 1 is unwanted). Preferences are determined by number of times the teams have played on each pad.
-- min_matches_at_loc: Lesser of the number of matches played at each location between the 2 teams, ordered by preference order.
+- teams - list(Team): List of teams participating in the match. Each team is an instance of the Team class.
+- preference_order - list(int): Ordered preferences of locations to play (e.g [2, 0, 1], if these teams playing on pad 2 is preferable, and playing on pad 1 is unwanted). Preferences are determined by number of times the teams have played on each pad.
+- min_matches_at_loc - list(int): Lesser of the number of matches played at each location between the 2 teams, ordered by preference order.
   (e.g, team 1 has played [1, 0, 3] games on pads 0, 1, 2. team 2 has played [2, 2, 0]. Preference order is [1, 0, 2] in this situation.  min_matches_at_loc[0] = smaller number of games played at preference_order[0], between team 1 and 2.
   Preference_order[0] is 1, and team 1 played 0 games at location 1. team 2 played 2 games, so the minimum is team 1's 0. min_matches_at_loc[0] would therefore be 0 and the full array would be [0, 1, 0].
-- max_matches_at_loc: Same as above, but maximum value. In the example, max_matches_at_loc = [2, 2, 3]
+- max_matches_at_loc - list(int): Same as above, but maximum value. In the example, max_matches_at_loc = [2, 2, 3]
 
 Note min, max_matches_at_loc are somewhat messy as variables, but they make the code for getting the teams in the right locations a fair amount simpler.
   
 #### Functions
-- update(team1, team2): Reinitialises the match with 2 different teams
-- location_unavailable(location): updates the preference order, min, max_matches_at_loc with the information that the match can no longer be played at location.
+- update(team1, team2) -> None: Reinitialises the match with 2 different teams
+- location_unavailable(location) -> None: updates the preference order, min, max_matches_at_loc with the information that the match can no longer be played at location.
 
 ## Global Variables
-### num_teams
+### num_teams - int
 This is the total number of teams currently playing. The variable is set at the menu at the start and updated when teams are added or removed.
-### num_sim_matches
+### num_sim_matches - int
 This is the number of games occurring at any one time. Elsewhere in this document I have referred to this as the "number of pads" or the "number of sides". In a standard alts session it will be 3, or 2 if playing half ice. The code is built to work with any number of pads however (although the display starts to break at around 10 or 11). I imagine there could be a fun session in the future with e.g teams of 3 and the ice split into 6 (although we would need extra cones and ways to make goals).
-### quit_code
+### quit_code - bool
 This is a simple variable which holds whether the user decided to exit the program via the cross at the top right.
 
 ## Global Functions
 ### init_teams() -> list(Team)
 Creates a list of teams with numbers from 1 to num_teams
 
-### make_match(team_list, first_matches=False) -> list(Match)
+### make_match(team_list : list(Team), first_matches=False) -> list(Match)
 Creates a list of num_sim_matches matches. 
 
 For the matching process, the teams are first ordered by priority. The priority is determined by:
@@ -112,13 +112,13 @@ If this fails, as is possible under certain circumstances, the randomisation in 
 
 If this repeatedly fails, or there aren't enough possible matches left to fill the remaining slots, it is assumed that all teams have played each other. Each team's not_played list is refilled with all possible opponents. Teams are prevented from playing each other twice in a row with a "last_team_played" variable, which is removed if attempts continue to fail (This could happen in e.g a simple scenario where there are 2 teams which are repeatedly playing each other on full ice).
 
-### even_sides
+### even_sides(matches: list(Match)) -> list(Match)
 Function which takes in a list of matches generated by make_match, and allocates them to pads which the teams have played on a minimum amount.
 
 It is explained in the Match class how min_matches_at_loc, max_matches_at_loc and preference_order work. We will not repeat it here, but the upshot of the code is that the match whose teams have played the lowest number of combined games on their first preference pad get their first preference. This pad is removed from the other matches' preference order and the process is repeated.
 
-### change_team_num
-Adds/removes teams from the system or changes the number of sections in the rink (e.g changes the rink from third ice to half ice). Looking back on this now, I think the function could definitely be improved in terms of clarity for the end user - I would recommend someone looking to improve the software try to get this into a shape where there isn't this weird maze of choices to go through just to add another team.
+### change_team_num(team_list: list(Team), sides: list(Match), next_sides: list(Match), removed_teams: list(Team), time_remaining: list(float)) -> sides: list(Match), next_sides: list(Match), quit: bool
+Adds/removes teams from the system or changes the number of sections in the rink (e.g changes the rink from third ice to half ice). Looking back on this now, I think the function could definitely be improved in terms of clarity for the end user - I would recommend someone looking to improve the software try to get this into a shape where there isn't this weird maze of choices to go through just to add another team. Also note that time_remaining is a list of 1 float, with the reason being that lists are mutable, so you can change the value in another thread and it will change instantly while you're doing something else in another funtion.
 
 The main logic for this is implemented via Question and Answer nodes, with question nodes routing through different possibilities for what the user wants to do and answer nodes containing the function to be executed at the end of different chains of logic.
 
@@ -137,13 +137,46 @@ AnswerNode(answer_function) is called once the maze of QuestionNodes has been na
 - add_team_to_end: Adds a new team to the system
 - update_current_games: Updates the current set of games (the ones displayed in the middle of the screen) once the information has been changed.
 - update_next_games: Updates the next set of games once the information has been changed.
+
+The parameters of the first 4 are: (team_list: list(Team), removed_teams: list(Team)) -> exit: bool, quit: bool
+And of the last 2: (team_list: list(Team), sides: list(Match), next_sides: list(Match)) -> sides: list(Match), next_sides: list(Match)
   
-### change_match
+### change_match(sides: list(Match), next_sides: list(Match), team_list: list(Team), time_remaining: list(float)) -> sides: list(Match), next_sides: list(Match), quit: bool
 Allows the user to change who is playing the next set of matches. 
-Most of the functionality is 
-### print_matches
-### print_stats
-### update_clock
-### update_teams
-### main
+Most of the functionality is contained within the display_module get_match_change function, but a few key things are done here:
+- Checking whether the current or next set of matches is the set to be changed
+- If it's the current set, checking whether the timer is running and warning the user if so
+- Recomputing the next set of matches if the current set is changed
+  
+### print_matches(sides_given: list(Match)) -> None
+Function to print a set of matches out (for e.g debugging purposes)
+
+### print_stats(teams: list(Team), removed_teams: list(Team)) -> None
+Function to print out the stats of the games played during a session. (for debugging or interest)
+
+### update_clock(background_group: pygame.sprite.Group, time_remaining: list(float)) -> None
+Function to update the display of the clock. Finds the clock sprite within the background group and then changes it to contain the current value of time_remaining (held in a list, which is mutable, so that any updates to it in another thread will affect everything else immediately).
+
+### update_teams(team_list: list(Team), sides: list(Match), add: bool) -> None
+Updates the teams after they have been added or removed from playing the current set of games. If add, then the stats from the new set of games are added, if not they are removed.
+
+### main() -> quit: bool
+Main function, which calls everything else. display_module.menu() is called first, so main has access to things like the number of teams and number of simultaneous matches. 
+It uses this to set up the initial teams, matches, sides, etc.
+
+It then loops through the following actions while the timer hasn't hit zero:
+- Checking if the timer has started
+- If it hasn't, and it should have, start timer.
+- Update the display
+- Checks if a button has been clicked
+- If a button has been clicked, perform that action
+
+Once the timer hits zero, the following is performed:
+- Clock is reset
+- Next set of matches becomes the current set of matches
+- Checks if all teams have played their first match
+- If so, first_matches is set to False, meaning the teams are no longer paired in order
+- Next set of matches is generated
+- Pause button on display is switched back to a play button
+
 ## Display module
